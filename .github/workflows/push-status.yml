@@ -1,0 +1,52 @@
+# .github/workflows/push-status.yml
+# Auto-commits status.json to the repo every 5 minutes
+# so GitHub Pages always has near-live data.
+#
+# Setup:
+#   1. In your repo → Settings → Actions → General
+#      → set "Workflow permissions" to "Read and write permissions"
+#   2. Commit this file to .github/workflows/push-status.yml
+#
+# How it works:
+#   - Runs every 5 minutes via cron
+#   - If status.json has changed, commits and pushes it
+#   - GitHub Pages rebuilds automatically on each push
+
+name: Sync status.json
+
+on:
+  push:
+    paths:
+      - 'status.json'
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Check for changes
+        id: check
+        run: |
+          git config user.name  "Normandy Bot"
+          git config user.email "bot@normandy.local"
+          git add status.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true"  >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git commit -m "chore: update status.json [skip ci]"
+          git push
