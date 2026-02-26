@@ -490,7 +490,7 @@ function fmtGBP(v){
 }
 function fmtPct(v, dp=2){
   if(typeof v!=='number') return '—';
-  return (v>=0?'▲':') + Math.abs(v).toFixed(dp) + '%';
+  return (v>=0?'\u25b2':'\u25bc') + Math.abs(v).toFixed(dp) + '%';
 }
 function setClass(el, v, posClass='td-pos', negClass='td-neg', neutClass='td-wht'){
   el.classList.remove(posClass, negClass, neutClass);
