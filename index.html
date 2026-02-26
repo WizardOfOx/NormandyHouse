@@ -461,11 +461,16 @@ body {
 <script>
 // ═══════════════════════════════════════════════════════════════
 // NORMANDY LIVE DASHBOARD — Polling Engine
-// Polls http://localhost:5050/api/status every 5 seconds
+//
+// Mode detection:
+//   • Served from localhost:5050  → hits /api/status (live, 5s)
+//   • Opened from GitHub Pages    → reads ./status.json (5s)
+//   • Opened as local file        → reads ./status.json (5s)
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL      = 'http://localhost:5050/api/status';
-const POLL_INTERVAL = 5000;
+const IS_LOCAL_SERVER = window.location.port === '5050' && window.location.hostname === 'localhost';
+const API_URL         = IS_LOCAL_SERVER ? '/api/status' : './status.json';
+const POLL_INTERVAL   = 5000;
 
 const ASSET_NAMES = {
   xau:     'XAU/USD', sp500: 'S&P 500', ftse100: 'FTSE 100',
