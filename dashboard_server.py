@@ -11,7 +11,7 @@ Routes:
 
 Reads directly from the engine output files:
   - output/execution_log.csv     → trades, positions, P&L
-  - output/dry_run_balance.json  → virtual balance
+  - output/dry_run_balance.json  → account balance
   - output/quant_{asset}.csv     → trend mode per asset (if present)
 
 Usage:
@@ -192,7 +192,7 @@ def _read_balance() -> dict:
                 "daily_start":   round(start, 2),
                 "daily_pnl":     round(daily_pnl, 2),
                 "daily_pnl_pct": round(daily_pnl / start * 100, 3) if start else 0,
-                "mode":          "dry_run",
+                "mode":          data.get("mode", "live"),  # read from file, not hardcoded
             }
         except Exception:
             pass
