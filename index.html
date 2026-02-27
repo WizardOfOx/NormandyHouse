@@ -390,19 +390,41 @@ body {
 
       <div class="sb-section anim" style="animation-delay:0.08s">
         <div class="sb-heading">Execution Status</div>
-        <div class="sb-desc">Strategy heartbeat and system health</div>
-        <div class="engine-status">
+        <div class="sb-desc">Dual engine heartbeat</div>
+
+        <!-- Trend Engine -->
+        <div class="engine-status" style="margin-bottom:8px">
           <div class="status-dot" id="engine-dot"></div>
           <div>
-            <div class="engine-label">Strategy Engine</div>
-            <div class="engine-sub" id="engine-sub">Live · Deterministic V1.4</div>
+            <div class="engine-label">Trend Engine</div>
+            <div class="engine-sub">Deterministic V1.4 · Session hours</div>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="info-row"><span class="info-key">Trades</span><span class="info-val live" id="trend-trades">—</span></div>
+          <div class="info-row"><span class="info-key">Win Rate</span><span class="info-val live" id="trend-wr">—</span></div>
+          <div class="info-row"><span class="info-key">Session P&amp;L</span><span class="info-val live" id="trend-pnl">—</span></div>
+          <div class="info-row"><span class="info-key">Profit Factor</span><span class="info-val live" id="trend-pf">—</span></div>
+        </div>
+
+        <!-- Structure Engine -->
+        <div class="engine-status" style="margin-bottom:8px; border-color:rgba(201,168,76,0.25)">
+          <div class="status-dot" id="structure-dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold)"></div>
+          <div>
+            <div class="engine-label">Structure Engine</div>
+            <div class="engine-sub" style="color:var(--gold)">Tidal V1.0 · 24/5</div>
           </div>
         </div>
         <div>
+          <div class="info-row"><span class="info-key">Trades</span><span class="info-val live" id="structure-trades">—</span></div>
+          <div class="info-row"><span class="info-key">Win Rate</span><span class="info-val live" id="structure-wr">—</span></div>
+          <div class="info-row"><span class="info-key">Session P&amp;L</span><span class="info-val live" id="structure-pnl">—</span></div>
+          <div class="info-row"><span class="info-key">Profit Factor</span><span class="info-val live" id="structure-pf">—</span></div>
+        </div>
+
+        <div style="margin-top:14px">
           <div class="info-row"><span class="info-key">Last updated</span><span class="info-val live" id="heartbeat">--:--:--</span></div>
-          <div class="info-row"><span class="info-key">Data source</span><span class="info-val">execution_log.csv</span></div>
           <div class="info-row"><span class="info-key">System health</span><span class="info-val live" id="sys-health">Connecting</span></div>
-          <div class="info-row"><span class="info-key">Instruments</span><span class="info-val">6 active</span></div>
           <div class="info-row"><span class="info-key">Open positions</span><span class="info-val live" id="sb-open-pos">—</span></div>
         </div>
       </div>
@@ -536,6 +558,7 @@ function render(data){
   renderTradeLog(data.recent_trades);
   renderSidebar(data.analytics, data.health);
   renderSidebarTradeLog(data.recent_trades);
+  renderEngines(data.trend_analytics, data.structure_analytics);
 
   // Update timestamp
   const now = new Date();
@@ -693,6 +716,38 @@ function renderSidebar(a, health){
   if(openEl){
     const posEl2 = document.getElementById('bal-open-pos');
     if(posEl2) openEl.textContent = posEl2.textContent;
+  }
+}
+
+function renderEngines(trend, structure){
+  const fmt2 = v => typeof v==='number' ? v.toFixed(2) : '—';
+  const fmtPF = v => typeof v==='number' ? (v===0?'—':v.toFixed(2)) : '—';
+
+  // Trend engine
+  if(trend){
+    setText('trend-trades', trend.total_trades||'—');
+    const twrEl = document.getElementById('trend-wr');
+    if(twrEl){ twrEl.textContent = trend.total_trades ? fmt2(trend.win_rate)+'%' : '—'; twrEl.className='info-val live' + (trend.win_rate>40?' td-pos':trend.win_rate>0?' td-wht':''); }
+    const tpnlEl = document.getElementById('trend-pnl');
+    if(tpnlEl){ tpnlEl.textContent = trend.total_pnl ? fmtGBP(trend.total_pnl) : '—'; setClass(tpnlEl, trend.total_pnl||0,'td-pos','td-neg','td-wht'); }
+    setText('trend-pf', trend.total_trades ? fmtPF(trend.profit_factor) : '—');
+  }
+
+  // Structure engine
+  if(structure){
+    setText('structure-trades', structure.total_trades||'—');
+    const swrEl = document.getElementById('structure-wr');
+    if(swrEl){ swrEl.textContent = structure.total_trades ? fmt2(structure.win_rate)+'%' : '—'; }
+    const spnlEl = document.getElementById('structure-pnl');
+    if(spnlEl){ spnlEl.textContent = structure.total_pnl ? fmtGBP(structure.total_pnl) : '—'; setClass(spnlEl, structure.total_pnl||0,'td-pos','td-neg','td-wht'); }
+    setText('structure-pf', structure.total_trades ? fmtPF(structure.profit_factor) : '—');
+  }
+
+  // Set structure dot colour based on activity
+  const sDot = document.getElementById('structure-dot');
+  if(sDot && structure && structure.total_trades > 0){
+    sDot.style.background = 'var(--gold)';
+    sDot.style.boxShadow  = '0 0 8px var(--gold)';
   }
 }
 

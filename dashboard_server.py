@@ -128,14 +128,23 @@ def _build_status() -> dict:
     open_pos    = _compute_open_positions(exec_df)
     health      = _compute_health(exec_df, analytics)
 
+    # Per-engine split
+    trend_df     = exec_df[exec_df["source"] == "trend"]     if exec_df is not None else None
+    structure_df = exec_df[exec_df["source"] == "structure"] if exec_df is not None else None
+
+    trend_analytics     = _compute_analytics(trend_df)
+    structure_analytics = _compute_analytics(structure_df)
+
     return {
-        "timestamp":      datetime.now().isoformat(),
-        "balance":        balance,
-        "analytics":      analytics,
-        "per_asset":      per_asset,
-        "recent_trades":  recent,
-        "open_positions": open_pos,
-        "health":         health,
+        "timestamp":          datetime.now().isoformat(),
+        "balance":            balance,
+        "analytics":          analytics,
+        "trend_analytics":    trend_analytics,
+        "structure_analytics":structure_analytics,
+        "per_asset":          per_asset,
+        "recent_trades":      recent,
+        "open_positions":     open_pos,
+        "health":             health,
     }
 
 
@@ -172,6 +181,8 @@ def _read_execution_log() -> Optional[pd.DataFrame]:
         df["pnl"]       = pd.to_numeric(df["pnl"],   errors="coerce").fillna(0)
         df["price"]     = pd.to_numeric(df["price"], errors="coerce").fillna(0)
         df["lots"]      = pd.to_numeric(df["lots"],  errors="coerce").fillna(0)
+        if "source" not in df.columns:
+            df["source"] = "trend"   # legacy logs before source field was added
         return df
     except Exception as e:
         log.warning(f"Could not read execution log: {e}")
