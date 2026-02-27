@@ -351,7 +351,7 @@ body {
             </tr>
           </thead>
           <tbody id="asset-table-body">
-            <tr><td colspan="8" style="text-align:center;color:var(--white-30);padding:28px;font-family:var(--mono);font-size:11px;">Connecting to engine data...</td></tr>
+            <tr id="asset-table-placeholder"><td colspan="8" style="text-align:center;color:var(--white-30);padding:28px;font-family:var(--mono);font-size:11px;">Awaiting engine data — start dashboard_server.py</td></tr>
           </tbody>
         </table>
       </div>
@@ -519,6 +519,14 @@ function setText(id, text, flashIt=false){
 let lastTradeCount = 0;
 
 function render(data){
+  // If data is empty object (engine not started yet / status.json not populated)
+  const hasData = data && (data.balance || data.analytics || data.per_asset);
+  if(!hasData){
+    setOffline('No engine data yet');
+    document.getElementById('sys-health').textContent = 'Engine not started';
+    return;
+  }
+
   const hasNewTrades = (data.analytics?.total_trades || 0) > lastTradeCount;
   lastTradeCount = data.analytics?.total_trades || 0;
 
