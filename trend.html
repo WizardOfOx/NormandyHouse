@@ -541,6 +541,13 @@ async function poll(){
     document.getElementById('live-status').textContent='live · 5s';
     document.getElementById('engine-dot').className='status-dot';
     render(data);
+    const trendRunning = (data.engines||{}).trend_running || false;
+    const _tagLabel = document.getElementById('engine-tag-label');
+    const _tagDot   = document.getElementById('engine-tag-dot');
+    if(_tagLabel) _tagLabel.textContent = 'TREND ENGINE · ' + (trendRunning ? 'ACTIVE' : 'IDLE');
+    if(_tagDot){ _tagDot.style.background = trendRunning ? 'var(--green)' : 'var(--red)'; _tagDot.style.boxShadow = '0 0 6px ' + (trendRunning ? 'var(--green)' : 'var(--red)'); _tagDot.style.animation = trendRunning ? '' : 'none'; }
+    const _tagBox = document.querySelector('.engine-tag');
+    if(_tagBox){ _tagBox.style.borderColor = trendRunning ? 'rgba(61,186,111,0.3)' : 'rgba(217,79,79,0.3)'; _tagBox.style.background = trendRunning ? 'rgba(61,186,111,0.06)' : 'rgba(217,79,79,0.06)'; _tagBox.style.color = trendRunning ? 'var(--green)' : 'var(--red)'; }
   }catch(e){
     document.getElementById('live-dot').className='live-dot offline';
     document.getElementById('live-status').textContent='server offline';

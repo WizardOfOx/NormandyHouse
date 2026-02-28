@@ -10,9 +10,11 @@ Routes:
   /api/status     → full JSON payload
 
 Reads directly from the engine output files:
-  - output/execution_log.csv     → trades, positions, P&L
-  - output/dry_run_balance.json  → account balance
-  - output/quant_{asset}.csv     → trend mode per asset (if present)
+  - output/execution_log.csv           → trades, positions, P&L
+  - output/dry_run_balance.json        → account balance
+  - output/quant_{asset}.csv           → trend mode per asset (if present)
+  - output/trend_heartbeat.json        → trend engine alive check (mtime < 20s)
+  - output/structure_heartbeat.json    → structure engine alive check (mtime < 20s)
 
 Usage:
   python dashboard_server.py
@@ -123,6 +125,19 @@ def _write_status_json(data: dict):
         log.debug(f"status.json write failed: {e}")
 
 
+def _check_engine_running(engine_name: str, max_age: int = 20) -> bool:
+    """
+    Return True if {engine_name}_heartbeat.json was written within max_age seconds.
+    Each engine writes this file every scan cycle (5s). If stale → engine is offline.
+    A missing file means the engine has never run this session → False.
+    """
+    path = os.path.join(OUTPUT_DIR, f"{engine_name}_heartbeat.json")
+    if not os.path.exists(path):
+        return False
+    age = time.time() - os.path.getmtime(path)
+    return age < max_age
+
+
 def _build_status() -> dict:
     balance = _read_balance()
     exec_df = _read_execution_log()
@@ -175,6 +190,13 @@ def _build_status() -> dict:
         "structure_recent":     structure_recent,
         "structure_open":       structure_open,
         "structure_health":     structure_health,
+        # ── Engine running status (heartbeat file mtime check) ─────────────────
+        # Each engine writes output/{name}_heartbeat.json every 5s while running.
+        # If the file is older than 20s, that engine is considered offline.
+        "engines": {
+            "trend_running":     _check_engine_running("trend"),
+            "structure_running": _check_engine_running("structure"),
+        },
     }
 
 
@@ -192,7 +214,7 @@ def _read_balance() -> dict:
                 "daily_start":   round(start, 2),
                 "daily_pnl":     round(daily_pnl, 2),
                 "daily_pnl_pct": round(daily_pnl / start * 100, 3) if start else 0,
-                "mode":          data.get("mode", "live"),  # read from file, not hardcoded
+                "mode":          data.get("mode", "live"),
             }
         except Exception:
             pass
@@ -211,7 +233,7 @@ def _read_execution_log() -> Optional[pd.DataFrame]:
         df["price"]     = pd.to_numeric(df["price"], errors="coerce").fillna(0)
         df["lots"]      = pd.to_numeric(df["lots"],  errors="coerce").fillna(0)
         if "source" not in df.columns:
-            df["source"] = "trend"   # legacy rows before source column existed
+            df["source"] = "trend"
         return df
     except Exception as e:
         log.warning(f"Could not read execution log: {e}")

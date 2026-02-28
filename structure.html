@@ -555,6 +555,13 @@ async function poll(){
     document.getElementById('live-status').textContent='live · 5s';
     document.getElementById('engine-dot').className='status-dot';
     render(data);
+    const structRunning = (data.engines||{}).structure_running || false;
+    const _tagLabel = document.getElementById('engine-tag-label');
+    const _tagDot   = document.getElementById('engine-tag-dot');
+    if(_tagLabel) _tagLabel.textContent = 'STRUCTURE ENGINE · ' + (structRunning ? '24/5 LIVE' : 'OFFLINE');
+    if(_tagDot){ _tagDot.style.background = structRunning ? 'var(--gold)' : 'var(--red)'; _tagDot.style.boxShadow = '0 0 6px ' + (structRunning ? 'var(--gold)' : 'var(--red)'); _tagDot.style.animation = structRunning ? '' : 'none'; }
+    const _tagBox = document.querySelector('.engine-tag');
+    if(_tagBox){ _tagBox.style.borderColor = structRunning ? 'rgba(201,168,76,0.35)' : 'rgba(217,79,79,0.35)'; _tagBox.style.background = structRunning ? 'rgba(201,168,76,0.07)' : 'rgba(217,79,79,0.07)'; _tagBox.style.color = structRunning ? 'var(--gold)' : 'var(--red)'; }
   }catch(e){
     document.getElementById('live-dot').className='live-dot offline';
     document.getElementById('live-status').textContent='server offline';
